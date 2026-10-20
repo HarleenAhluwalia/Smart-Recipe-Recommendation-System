@@ -1,24 +1,64 @@
-"""Temporary, transparent ingredient-overlap baseline. Jesse can replace recommend()."""
+
 import json
-import pandas as pd
 from preprocess import normalize_ingredient
 
-def recommend(recipes: pd.DataFrame, user_ingredients: list[str], top_k: int = 12, cuisine: str = 'All') -> list[dict]:
-    """Return list of {'title', 'ingredients', 'instructions', 'score', 'matched', 'missing', 'cuisine'}.
 
-    Jesse: replace implementation with TF-IDF/cosine similarity while preserving contract.
-    """
-    available = {normalize_ingredient(item) for item in user_ingredients if normalize_ingredient(item)}
-    results=[]
-    for row in recipes.to_dict('records'):
-        if cuisine != 'All' and str(row.get('cuisine','')).strip() != cuisine:
+# Find recipes that match the user's ingredients
+def recommend(recipes, user_ingredients, top_k=12, cuisine="All"):
+
+    results = []
+
+    # Clean the ingredients entered by the user
+    available = []
+
+    for ingredient in user_ingredients:
+        clean = normalize_ingredient(ingredient)
+
+        if clean != "" and clean not in available:
+            available.append(clean)
+
+    # Check each recipe in the dataset
+    for index, row in recipes.iterrows():
+
+        # Check the selected cuisine
+        if cuisine != "All" and row["cuisine"] != cuisine:
             continue
-        ingredients=json.loads(row['ingredients'])
-        needed=set(json.loads(row['normalized_ingredients']))
-        matched=sorted(available & needed)
-        if not matched:
-            continue
-        missing=sorted(needed - available)
-        score=len(matched)/len(needed) if needed else 0
-        results.append({**row,'ingredients':ingredients,'score':score,'matched':matched,'missing':missing})
-    return sorted(results, key=lambda r:(-r['score'],-len(r['matched']),r['title']))[:top_k]
+
+        # Get the recipe ingredients
+        ingredients = json.loads(row["ingredients"])
+        needed = json.loads(row["normalized_ingredients"])
+
+        matched = []
+        missing = []
+
+        # Compare the user's ingredients with the recipe
+        for ingredient in needed:
+
+            if ingredient in available:
+                matched.append(ingredient)
+            else:
+                missing.append(ingredient)
+
+        # Only recommend recipes with matching ingredients
+        if len(matched) > 0:
+
+            # Calculate the match percentage
+            score = len(matched) / len(needed)
+
+            recipe = {
+                "title": row["title"],
+                "ingredients": ingredients,
+                "instructions": row["instructions"],
+                "cuisine": row["cuisine"],
+                "score": score,
+                "matched": matched,
+                "missing": missing
+            }
+
+            results.append(recipe)
+
+    # Show recipes with the highest match percentage first
+    results.sort(key=lambda recipe: recipe["score"], reverse=True)
+
+    # Return the requested number of recipes
+    return results[:top_k]

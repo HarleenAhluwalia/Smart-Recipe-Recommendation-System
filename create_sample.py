@@ -1,32 +1,94 @@
-"""Create a small original demonstration dataset (not a substitute for a full dataset)."""
 import pandas as pd
-from pathlib import Path
-rows=[
-('Tomato Egg Scramble','2 eggs; 1 tomato; 1 tbsp olive oil; salt; black pepper','Whisk eggs. Chop tomato. Heat oil, cook tomatoes for two minutes, add eggs, and stir until cooked.','Home-style'),
-('Spinach Omelet','3 eggs; spinach; cheese; butter; salt','Beat eggs and pour into a buttered skillet. Add spinach and cheese; fold when set.','Breakfast'),
-('Cheese Quesadilla','2 tortillas; cheddar cheese; 1 tomato; onion','Place cheese and diced vegetables between tortillas. Toast in a pan until golden.','Mexican'),
-('Garlic Butter Pasta','pasta; 2 cloves garlic; butter; parsley; salt','Boil pasta until tender. Melt butter with minced garlic, toss with pasta and parsley.','Italian'),
-('Tomato Basil Pasta','pasta; 3 tomatoes; fresh basil; olive oil; 2 cloves garlic','Cook pasta. Saute garlic and chopped tomatoes in oil. Toss with pasta and basil.','Italian'),
-('Chicken Rice Bowl','chicken breast; rice; broccoli; soy sauce; garlic','Cook rice. Cook chicken thoroughly in a skillet with garlic. Steam broccoli and serve with soy sauce.','Asian-inspired'),
-('Black Bean Tacos','black beans; tortillas; onion; tomato; cumin; lime','Warm beans with cumin. Spoon into tortillas and top with diced onion, tomato, and lime.','Mexican'),
-('Greek Cucumber Salad','cucumber; tomato; feta cheese; olive oil; lemon','Chop cucumber and tomato. Toss with feta, olive oil, and lemon juice.','Mediterranean'),
-('Banana Oat Pancakes','banana; oats; eggs; cinnamon; milk','Blend ingredients into a batter. Cook small pancakes on a lightly greased skillet until set.','Breakfast'),
-('Vegetable Fried Rice','cooked rice; egg; carrot; peas; soy sauce; green onion','Scramble egg. Saute diced carrots and peas. Add cooked rice and soy sauce; finish with green onion.','Asian-inspired'),
-('Baked Potato','potato; olive oil; salt; sour cream; green onion','Scrub and prick potato. Rub with oil and salt. Bake at 425 F until tender; top with sour cream and onion.','American'),
-('Chickpea Tomato Stew','chickpeas; tomato; onion; garlic; cumin; olive oil','Cook chopped onion and garlic in olive oil. Add tomatoes, chickpeas, and cumin; simmer until thick.','Mediterranean'),
-('Peanut Butter Banana Toast','bread; peanut butter; banana; cinnamon','Toast bread. Spread peanut butter and top with banana slices and cinnamon.','Breakfast'),
-('Mushroom Risotto','arborio rice; mushroom; onion; vegetable broth; parmesan; butter','Saute onion and mushrooms. Stir in rice and add warm broth gradually until creamy. Finish with butter and parmesan.','Italian'),
-('Avocado Egg Toast','bread; avocado; egg; lemon; salt','Toast bread. Mash avocado with lemon and salt. Cook egg thoroughly and place on top.','Breakfast'),
-('Broccoli Cheese Soup','broccoli; cheddar cheese; milk; onion; vegetable broth; butter','Saute onion in butter. Add broccoli and broth, simmer until soft. Stir in milk and cheese.','American'),
-('Lentil Soup','lentils; carrot; celery; onion; vegetable broth; cumin','Saute diced vegetables. Add lentils, cumin, and broth and simmer until lentils are tender.','Mediterranean'),
-('Caprese Sandwich','bread; mozzarella; tomato; basil; olive oil','Layer mozzarella, sliced tomato, and basil on bread. Drizzle with olive oil.','Italian'),
-('Apple Yogurt Parfait','apple; greek yogurt; oats; honey; cinnamon','Layer chopped apple, yogurt, and oats. Drizzle honey and sprinkle cinnamon.','Breakfast'),
-('Tofu Stir Fry','tofu; bell pepper; broccoli; soy sauce; garlic; rice','Cook rice. Brown tofu in a pan. Saute vegetables and garlic, add soy sauce, and serve over rice.','Asian-inspired'),
-('Vegetarian Burrito Bowl','rice; black beans; corn; tomato; avocado; lime','Cook rice. Warm beans and corn, then layer with tomato, avocado, and lime juice.','Mexican'),
-('Simple Egg Salad','egg; mayonnaise; mustard; celery; salt','Hard-boil eggs and cool. Chop and combine with mayonnaise, mustard, diced celery, and salt.','American'),
-('Roasted Carrot Soup','carrot; onion; vegetable broth; olive oil; garlic','Roast carrots until tender. Cook onion and garlic in oil, add broth and carrots, then blend.','American'),
-('Berry Smoothie','banana; strawberries; blueberries; milk; yogurt','Blend fruit with milk and yogurt until smooth.','Breakfast'),
+import os
+
+# Sample recipes for testing our application
+# Each recipe has a name, ingredients, instructions, and cuisine
+
+recipes = [
+    ["Tomato Egg Scramble", "eggs; tomato; olive oil; salt; pepper",
+     "Cook tomatoes in a pan, add eggs, and stir until cooked.", "Home-style"],
+
+    ["Spinach Omelet", "eggs; spinach; cheese; butter; salt",
+     "Cook eggs in a pan, add spinach and cheese, then fold.", "Breakfast"],
+
+    ["Cheese Quesadilla", "tortillas; cheese; tomato; onion",
+     "Add cheese and vegetables between tortillas and cook in a pan.", "Mexican"],
+
+    ["Garlic Butter Pasta", "pasta; garlic; butter; parsley; salt",
+     "Boil pasta and mix with melted garlic butter.", "Italian"],
+
+    ["Tomato Basil Pasta", "pasta; tomato; basil; olive oil; garlic",
+     "Cook pasta and mix with tomatoes, garlic, and basil.", "Italian"],
+
+    ["Chicken Rice Bowl", "chicken; rice; broccoli; soy sauce; garlic",
+     "Cook chicken, rice, and broccoli, then combine.", "Asian-inspired"],
+
+    ["Black Bean Tacos", "black beans; tortillas; onion; tomato; cumin; lime",
+     "Heat beans and serve in tortillas with vegetables.", "Mexican"],
+
+    ["Greek Cucumber Salad", "cucumber; tomato; feta cheese; olive oil; lemon",
+     "Chop vegetables and mix with feta cheese and olive oil.", "Mediterranean"],
+
+    ["Banana Oat Pancakes", "banana; oats; eggs; cinnamon; milk",
+     "Mix ingredients into a batter and cook pancakes.", "Breakfast"],
+
+    ["Vegetable Fried Rice", "rice; egg; carrot; peas; soy sauce; green onion",
+     "Cook vegetables and egg, then mix with rice and soy sauce.", "Asian-inspired"],
+
+    ["Baked Potato", "potato; olive oil; salt; sour cream; green onion",
+     "Bake potato until tender and add toppings.", "American"],
+
+    ["Chickpea Tomato Stew", "chickpeas; tomato; onion; garlic; cumin; olive oil",
+     "Cook onion and garlic, then add tomatoes and chickpeas.", "Mediterranean"],
+
+    ["Peanut Butter Banana Toast", "bread; peanut butter; banana; cinnamon",
+     "Toast bread and add peanut butter and banana.", "Breakfast"],
+
+    ["Mushroom Risotto", "rice; mushroom; onion; vegetable broth; parmesan; butter",
+     "Cook rice with mushrooms and gradually add broth.", "Italian"],
+
+    ["Avocado Egg Toast", "bread; avocado; egg; lemon; salt",
+     "Toast bread and top with avocado and cooked egg.", "Breakfast"],
+
+    ["Broccoli Cheese Soup", "broccoli; cheese; milk; onion; vegetable broth; butter",
+     "Cook broccoli and onion in broth, then add milk and cheese.", "American"],
+
+    ["Lentil Soup", "lentils; carrot; celery; onion; vegetable broth; cumin",
+     "Cook vegetables and lentils in broth until soft.", "Mediterranean"],
+
+    ["Caprese Sandwich", "bread; mozzarella; tomato; basil; olive oil",
+     "Add mozzarella, tomato, and basil between bread.", "Italian"],
+
+    ["Apple Yogurt Parfait", "apple; yogurt; oats; honey; cinnamon",
+     "Layer apple, yogurt, and oats, then add honey.", "Breakfast"],
+
+    ["Tofu Stir Fry", "tofu; bell pepper; broccoli; soy sauce; garlic; rice",
+     "Cook tofu and vegetables, then serve with rice.", "Asian-inspired"],
+
+    ["Vegetarian Burrito Bowl", "rice; black beans; corn; tomato; avocado; lime",
+     "Combine cooked rice, beans, corn, and vegetables.", "Mexican"],
+
+    ["Simple Egg Salad", "egg; mayonnaise; mustard; celery; salt",
+     "Boil eggs, chop them, and mix with mayonnaise and mustard.", "American"],
+
+    ["Roasted Carrot Soup", "carrot; onion; vegetable broth; olive oil; garlic",
+     "Cook carrots, onion, and garlic, then blend with broth.", "American"],
+
+    ["Berry Smoothie", "banana; strawberries; blueberries; milk; yogurt",
+     "Blend all ingredients until smooth.", "Breakfast"]
 ]
-out=Path(__file__).resolve().parent/'data'/'sample_recipes.csv'
-pd.DataFrame(rows,columns=['name','ingredients','instructions','country']).to_csv(out,index=False)
-print(f'Created {len(rows)} demo recipes at {out}')
+
+# Create a folder for the dataset
+os.makedirs("data", exist_ok=True)
+
+# Convert the recipes into a DataFrame
+df = pd.DataFrame(
+    recipes,
+    columns=["name", "ingredients", "instructions", "country"]
+)
+
+# Save the recipes as a CSV file
+df.to_csv("data/sample_recipes.csv", index=False)
+
+print("Sample recipe dataset created successfully!")
+print("Total recipes:", len(df))

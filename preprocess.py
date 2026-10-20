@@ -1,76 +1,113 @@
-"""Clean source recipes into a stable schema for the application."""
-import argparse
-import ast
-import json
-import re
-from pathlib import Path
 import pandas as pd
+import json
+import os
 
-ROOT = Path(__file__).resolve().parent
-MEASURE = re.compile(r'^(?:\d+(?:[./]\d+)?\s*|[¼½¾⅓⅔⅛⅜⅝⅞]\s*|a\s+|an\s+|one\s+|two\s+|pinch\s+(?:of\s+)?|to\s+taste\s*|\d+\s*[-–]\s*\d+\s*)+', re.I)
-UNITS = re.compile(r'^(?:(?:cups?|tablespoons?|tbsp|teaspoons?|tsp|grams?|g|kg|oz|ounces?|lbs?|pounds?|ml|l|liters?|cloves?|cans?|packages?|slices?|pieces?|bunches?|stalks?|medium|large|small)\b\.?\s*)+', re.I)
-ALIASES = {'tomatoes':'tomato','potatoes':'potato','eggs':'egg','onions':'onion','carrots':'carrot','bananas':'banana','apples':'apple','garlic cloves':'garlic','scallions':'green onion','spring onions':'green onion','bell peppers':'bell pepper','chickpeas':'chickpea','mushrooms':'mushroom','black beans':'black bean'}
+# Clean ingredient names so they are easier to compare
+def normalize_ingredient(ingredient):
+    ingredient = str(ingredient).lower().strip()
 
-def normalize_ingredient(value):
-    s = str(value).lower().strip()
-    s = re.sub(r'\([^)]*\)', '', s)
-    s = MEASURE.sub('', s)
-    s = UNITS.sub('', s)
-    s = re.sub(r'\b(?:fresh|frozen|chopped|diced|minced|sliced|peeled|boneless|skinless|optional|roughly|finely|of|some)\b', ' ', s)
-    s = re.split(r'[,;]', s)[0]
-    s = re.sub(r'[^a-z\s-]', ' ', s)
-    s = re.sub(r'\s+', ' ', s).strip(' -')
-    return ALIASES.get(s, s)
+    # Remove common measurements
+    words_to_remove = [
+        "cups", "cup", "tbsp", "tsp",
+        "tablespoon", "teaspoon", "cloves", "clove"
+    ]
 
-def split_ingredients(value):
-    if isinstance(value, list):
-        raw = value
-    else:
-        value = str(value).strip()
-        if value.startswith('['):
-            try:
-                parsed = ast.literal_eval(value)
-                raw = parsed if isinstance(parsed, list) else [value]
-            except (ValueError, SyntaxError):
-                raw = [value]
-        elif ';' in value:
-            raw = value.split(';')
-        elif '|' in value:
-            raw = value.split('|')
-        else:
-            raw = [value]
-    return [str(x).strip() for x in raw if str(x).strip() and str(x).strip().lower() != 'nan']
+    words = ingredient.split()
+    clean_words = []
 
-def clean_recipes(input_path, output_path):
-    df = pd.read_csv(input_path, encoding='utf-8-sig', on_bad_lines='skip').fillna('')
-    cols = {c.lower().strip(): c for c in df.columns}
-    def get(row, *names):
-        return next((row[cols[n]] for n in names if n in cols), '')
-    if not any(n in cols for n in ('name','title','recipe_name')) or not any(n in cols for n in ('ingredients','ingredient')):
-        raise ValueError(f'Expected name/title and ingredients columns. Found: {list(df.columns)}')
-    records, seen = [], set()
-    for _, row in df.iterrows():
-        title = str(get(row, 'name','title','recipe_name')).strip()
-        raw = split_ingredients(get(row, 'ingredients','ingredient'))
-        normalized = list(dict.fromkeys(filter(None, (normalize_ingredient(x) for x in raw))))
-        instructions = str(get(row,'instructions','directions','steps','description')).strip()
-        if not title or len(normalized) < 2 or not instructions or title.lower() in seen:
+    for word in words:
+        if word.isdigit():
             continue
-        seen.add(title.lower())
-        records.append({'recipe_id':len(records)+1, 'title':title, 'ingredients':json.dumps(raw, ensure_ascii=False),
-                        'normalized_ingredients':json.dumps(normalized, ensure_ascii=False),
-                        'instructions':instructions, 'cuisine':str(get(row,'country','cuisine','region')).strip()})
-    if not records:
-        raise ValueError('No valid recipes remain after preprocessing')
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(records).to_csv(output_path, index=False)
-    print(f'Input: {len(df)} rows | Cleaned: {len(records)} rows | Removed: {len(df)-len(records)}')
-    print(f'Saved: {output_path}')
-    return len(records)
 
-if __name__ == '__main__':
-    p = argparse.ArgumentParser(description='Normalize recipe CSV data')
-    p.add_argument('--input', type=Path, default=ROOT/'data'/'sample_recipes.csv')
-    p.add_argument('--output', type=Path, default=ROOT/'data'/'recipes_cleaned.csv')
-    a=p.parse_args()
-    clean_recipes(a.input,a.output)
+        if word in words_to_remove:
+            continue
+
+        clean_words.append(word)
+
+    ingredient = " ".join(clean_words)
+
+    # Make common ingredient names consistent
+    replacements = {
+        "tomatoes": "tomato",
+        "potatoes": "potato",
+        "eggs": "egg",
+        "onions": "onion",
+        "carrots": "carrot",
+        "bananas": "banana",
+        "mushrooms": "mushroom",
+        "chickpeas": "chickpea"
+    }
+
+    if ingredient in replacements:
+        ingredient = replacements[ingredient]
+
+    return ingredient
+
+
+# Clean the recipe dataset
+def clean_recipes(input_file, output_file):
+
+    # Read the original CSV file
+    df = pd.read_csv(input_file).fillna("")
+
+    cleaned_recipes = []
+    recipe_names = []
+
+    # Go through each recipe
+    for index, row in df.iterrows():
+
+        name = str(row["name"]).strip()
+        ingredients = str(row["ingredients"]).split(";")
+        instructions = str(row["instructions"]).strip()
+        cuisine = str(row["country"]).strip()
+
+        # Skip recipes with missing information
+        if name == "" or instructions == "":
+            continue
+
+        # Skip duplicate recipes
+        if name.lower() in recipe_names:
+            continue
+
+        # Clean each ingredient
+        clean_ingredients = []
+
+        for ingredient in ingredients:
+            cleaned = normalize_ingredient(ingredient)
+
+            if cleaned != "" and cleaned not in clean_ingredients:
+                clean_ingredients.append(cleaned)
+
+        # Skip recipes with fewer than two ingredients
+        if len(clean_ingredients) < 2:
+            continue
+
+        recipe_names.append(name.lower())
+
+        # Save the cleaned recipe
+        cleaned_recipes.append({
+            "recipe_id": len(cleaned_recipes) + 1,
+            "title": name,
+            "ingredients": json.dumps(ingredients),
+            "normalized_ingredients": json.dumps(clean_ingredients),
+            "instructions": instructions,
+            "cuisine": cuisine
+        })
+
+    # Create the data folder if needed
+    os.makedirs("data", exist_ok=True)
+
+    # Save the cleaned dataset
+    cleaned_df = pd.DataFrame(cleaned_recipes)
+    cleaned_df.to_csv(output_file, index=False)
+
+    print("Dataset cleaned successfully!")
+    print("Total recipes:", len(cleaned_df))
+
+
+# Run the program
+if __name__ == "__main__":
+    clean_recipes(
+        "data/sample_recipes.csv",
+        "data/recipes_cleaned.csv"
+    )

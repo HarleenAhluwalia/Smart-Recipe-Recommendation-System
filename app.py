@@ -1,101 +1,47 @@
 import streamlit as st
 import pandas as pd
-from recommender_adapter import recommend
 from preprocess import normalize_ingredient
+from recommender_adapter import recommend
 
-# Set up the page
-st.set_page_config(page_title="Smart Recipe Finder", page_icon="🥗")
+st.title("Smart Recipe Finder")
+st.write("Find recipes using ingredients you already have!")
 
-st.title("🥗 Smart Recipe Finder")
-st.write("Find recipes based on ingredients you already have!")
+recipes = pd.read_csv("data/recipes_cleaned.csv").fillna("") # read recipes
 
-# Load recipe data
-recipes = pd.read_csv("data/recipes_cleaned.csv").fillna("")
-
-# Enter ingredients
 st.header("Your Ingredients")
-
-user_input = st.text_area(
-    "Enter your ingredients separated by commas:",
-    placeholder="Example: tomato, egg, onion, cheese"
-)
-
+user_input = st.text_area("Enter ingredients separated by commas:")
 ingredients = []
 
-if user_input:
-    for item in user_input.split(","):
-        ingredient = normalize_ingredient(item)
+for item in user_input.split(","): # separate ingredients
+    item = normalize_ingredient(item) # clean ingredient
 
-        if ingredient:
-            ingredients.append(ingredient)
+    if item != "":
+        ingredients.append(item)
 
-# Upload a photo
-st.header("Upload Ingredient Photo")
-
-photo = st.file_uploader(
-    "Choose a picture of your ingredients",
-    type=["jpg", "jpeg", "png"]
-)
-
-if photo:
-    st.image(photo, caption="Uploaded Photo")
-    st.info("Image recognition will be added later.")
-
-# Recipe preferences
 st.header("Recipe Preferences")
+cuisines = ["All"] + sorted(recipes["cuisine"].unique()) # get cuisines
+cuisine = st.selectbox("Choose a cuisine:", cuisines) # choose cuisine
+number = st.slider("Number of recipes:", 1, 20, 5) # choose number
 
-cuisines = ["All"] + sorted(recipes["cuisine"].dropna().unique().tolist())
-
-selected_cuisine = st.selectbox("Choose a cuisine:", cuisines)
-
-number_of_recipes = st.slider(
-    "Number of recipes to show:",
-    1, 20, 5
-)
-
-# Find recipes
-if st.button("Find Recipes"):
+if st.button("Find Recipes"): # search button
 
     if len(ingredients) == 0:
-        st.warning("Please enter at least one ingredient.")
+        st.warning("Please enter ingredients.")
 
     else:
-        results = recommend(
-            recipes,
-            ingredients,
-            top_k=number_of_recipes,
-            cuisine=selected_cuisine
-        )
-
+        results = recommend(recipes, ingredients, number, cuisine) # find recipes
         st.header("Recommended Recipes")
 
         if len(results) == 0:
             st.write("No recipes found.")
 
-        else:
-            for recipe in results:
+        for recipe in results: # show each recipe
+            st.subheader(recipe["title"]) # recipe name
+            st.write("Match score:", round(recipe["score"] * 100), "%")
+            st.write("You have:", ", ".join(recipe["matched"]))
+            st.write("You need:", ", ".join(recipe["missing"]))
 
-                st.subheader(recipe["title"])
-
-                st.write(
-                    "Ingredient Match:",
-                    round(recipe["score"] * 100),
-                    "%"
-                )
-
-                st.write("Ingredients you have:")
-                st.write(", ".join(recipe["matched"]))
-
-                st.write("Ingredients you need:")
-                st.write(", ".join(recipe["missing"]))
-
-                with st.expander("View Recipe"):
-                    st.write("Ingredients:")
-                    st.write(", ".join(recipe["ingredients"]))
-
-                    st.write("Instructions:")
-                    st.write(recipe["instructions"])
-
-                st.divider()
-
-st.caption("CPSC 481 - Smart Recipe Recommendation System")
+            with st.expander("View Recipe"): # recipe details
+                st.write("Ingredients:", ", ".join(recipe["ingredients"]))
+                st.write("Instructions:", recipe["instructions"])
+            st.divider()

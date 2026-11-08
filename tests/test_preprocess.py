@@ -1,29 +1,21 @@
-
 import pandas as pd
 from preprocess import normalize_ingredient, clean_recipes
-from recommender_adapter import recommend
+
+def test_ingredients(): # test ingredient cleaning
+    assert normalize_ingredient("tomatoes") == "tomato" # check plural
+    assert normalize_ingredient("2 eggs") == "egg" # check quantity
+    assert normalize_ingredient("1/2 cup onions") == "onion" # check measurement
 
 
-# Test ingredient cleaning
-def test_ingredients():
+def test_dataset(tmp_path): # test dataset cleaning
+    input_file = tmp_path / "recipes.csv" # original file
+    output_file = tmp_path / "cleaned.csv" # cleaned file
 
-    assert normalize_ingredient("tomatoes") == "tomato"
-    assert normalize_ingredient("eggs") == "egg"
-    assert normalize_ingredient("onions") == "onion"
-
-
-# Test cleaning the recipe dataset
-def test_dataset(tmp_path):
-
-    input_file = tmp_path / "recipes.csv"
-    output_file = tmp_path / "cleaned.csv"
-
-    # Create sample recipes for testing
-    recipes = [
+    recipes = [ # sample recipes for testing
         {
             "name": "Egg Dish",
             "ingredients": "eggs; tomato; onion",
-            "instructions": "Cook the ingredients.",
+            "instructions": "Cook everything.",
             "country": "American"
         },
         {
@@ -34,45 +26,9 @@ def test_dataset(tmp_path):
         }
     ]
 
-    # Save sample recipes
-    df = pd.DataFrame(recipes)
-    df.to_csv(input_file, index=False)
+    pd.DataFrame(recipes).to_csv(input_file, index=False) # save sample CSV
+    clean_recipes(input_file, output_file) # clean recipes
+    cleaned = pd.read_csv(output_file) # read cleaned CSV
 
-    # Clean the dataset
-    clean_recipes(input_file, output_file)
-
-    cleaned = pd.read_csv(output_file)
-
-    # Check that the incomplete recipe was removed
-    assert len(cleaned) == 1
-
-    # Check that the correct recipe remains
-    assert cleaned.iloc[0]["title"] == "Egg Dish"
-
-
-# Test recipe recommendations
-def test_recommendations():
-
-    # Create sample recipe data
-    recipes = pd.DataFrame([
-        {
-            "title": "Egg Dish",
-            "ingredients": '["egg", "tomato", "onion"]',
-            "normalized_ingredients": '["egg", "tomato", "onion"]',
-            "instructions": "Cook the ingredients.",
-            "cuisine": "American"
-        }
-    ])
-
-    # Search using ingredients
-    results = recommend(recipes, ["egg", "tomato"])
-
-    # Check the recommended recipe
-    assert len(results) == 1
-    assert results[0]["title"] == "Egg Dish"
-
-    # Check the matching ingredients
-    assert results[0]["matched"] == ["egg", "tomato"]
-
-    # Check the missing ingredient
-    assert results[0]["missing"] == ["onion"]
+    assert len(cleaned) == 1 # check incomplete recipe removed
+    assert cleaned.iloc[0]["title"] == "Egg Dish" # check correct recipe

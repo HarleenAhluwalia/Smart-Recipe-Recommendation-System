@@ -1,10 +1,6 @@
 import pandas as pd
-import os
 
-# Sample recipes for testing our application
-# Each recipe has a name, ingredients, instructions, and cuisine
-
-recipes = [
+recipes = [ # list of sample recipes
     ["Tomato Egg Scramble", "eggs; tomato; olive oil; salt; pepper",
      "Cook tomatoes in a pan, add eggs, and stir until cooked.", "Home-style"],
 
@@ -78,17 +74,10 @@ recipes = [
      "Blend all ingredients until smooth.", "Breakfast"]
 ]
 
-# Create a folder for the dataset
-os.makedirs("data", exist_ok=True)
-
-# Convert the recipes into a DataFrame
-df = pd.DataFrame(
+df = pd.DataFrame( # create recipe table
     recipes,
     columns=["name", "ingredients", "instructions", "country"]
 )
 
-# Save the recipes as a CSV file
-df.to_csv("data/sample_recipes.csv", index=False)
-
-print("Sample recipe dataset created successfully!")
-print("Total recipes:", len(df))
+df.to_csv("data/sample_recipes.csv", index=False) # save recipes to CSV
+print("Total recipes:", len(df)) # number of recipes

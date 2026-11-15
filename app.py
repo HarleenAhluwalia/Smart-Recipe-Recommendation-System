@@ -45,3 +45,11 @@ if st.button("Find Recipes"): # search button
                 st.write("Ingredients:", ", ".join(recipe["ingredients"]))
                 st.write("Instructions:", recipe["instructions"])
             st.divider()
+
+st.header("Ingredient Photo")
+
+photo = st.file_uploader("Upload a photo", type=["jpg", "jpeg", "png"]) # upload photo
+
+if photo:
+    st.image(photo) # show uploaded photo
+    st.info("Image recognition will be added later.")

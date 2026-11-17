@@ -1,8 +1,13 @@
 import json
+import math
+from collections import Counter
 from preprocess import normalize_ingredient
 
 
 def recommend(recipes, user_ingredients, top_k=12, cuisine="All"):
+
+    counts = Counter(i for raw in recipes["normalized_ingredients"] for i in set(json.loads(raw)))
+    idf = {i: math.log((len(recipes) + 1) / (n + 1)) + 1 for i, n in counts.items()}
 
     results = []
     available = []
@@ -16,8 +21,8 @@ def recommend(recipes, user_ingredients, top_k=12, cuisine="All"):
         if cuisine != "All" and row["cuisine"] != cuisine:
             continue
 
-        ingredients = json.loads(row["ingredients"]) # this includes measurments
-        needed = json.loads(row["normalized_ingredients"]) # this just used everything as a single ingrediant
+        ingredients = json.loads(row["ingredients"])
+        needed = json.loads(row["normalized_ingredients"])
 
         matched = []
         missing = []
@@ -29,7 +34,7 @@ def recommend(recipes, user_ingredients, top_k=12, cuisine="All"):
                 missing.append(ingredient)
 
         if len(matched) > 0:
-            score = len(matched) / len(needed)
+            score = sum(idf[i] for i in matched) / sum(idf[i] for i in needed)
             recipe = {
                 "title": row["title"],
                 "ingredients": ingredients,

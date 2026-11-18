@@ -42,7 +42,7 @@ if photo:
     st.image(photo)
     detected = []
     try:
-        with st.spinner("Identififying ingredients..."):
+        with st.spinner("Identifying ingredients..."):
             detected = cached_detect(photo.getvalue(), tuple(vocabulary))
     except anthropic.AuthenticationError:
         st.error("Authentication error. Please check your API key.")
@@ -56,7 +56,7 @@ if photo:
         st.error(f"Anthropic error: {e}")
 
     if not detected:
-        st.info("No ingredients detected. Please try again with a clearer photo, or add them manually below.")
+        st.info("No ingredients detected...")
     photo_ingredients = st.multiselect(
         "Ingredients found in your photo (add or remove as needed):",
         options=vocabulary,
@@ -73,7 +73,7 @@ number = st.slider("Number of recipes:", 1, 20, 5) # choose number
 if st.button("Find Recipes"): # search button
 
     if len(all_ingredients) == 0:
-        st.warning("Please enter ingredients.")
+        st.warning("Please enter ingredients or upload a photo.")
 
     else:
         results = recommend(recipes, all_ingredients, number, cuisine) # find recipes

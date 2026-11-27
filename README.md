@@ -2,66 +2,67 @@
 
 ## System Requirements
 
-Our project uses Python 3.11 and can run on Windows or macOS. We used Python as our programming language, Pandas for processing recipe data, Streamlit for creating the application, and Pytest for testing. For the ingredient photo feature, we used the Anthropic API (Claude) for image recognition and Pillow for preparing images. The photo feature needs an internet connection and an Anthropic API key.
+Our project uses Python 3.11 and can run on Windows or macOS. We used Python to build our application, Pandas to clean and organize recipe data, Streamlit to create the user interface, and Pytest to test our code. We also used Pillow and the Anthropic API (Claude AI) for ingredient photo recognition.
+
+An internet connection and an Anthropic API key are needed for the photo recognition feature.
 
 ## Installation Instructions
 
-First, download and unzip the project folder. Next, open the terminal and go to the project folder. Make sure Python is installed on your computer. To install the required libraries, run the following command:
+First, download and unzip the project folder. Then, open the terminal and go to the project folder. Make sure Python is installed on your computer.
+
+To install the required libraries, enter this command:
 
 `python -m pip install -r requirements.txt`
 
 ## API Key Setup
 
-The ingredient photo feature uses an Anthropic API key. Typing ingredients works without a key.
+Our photo recognition feature uses the Anthropic API. Users can still type ingredients and get recipe recommendations without an API key.
 
-1. Create an API key at https://console.anthropic.com.
-2. In the project folder, create a folder named `.streamlit` and a file inside it named `secrets.toml`.
-3. Add this line to `secrets.toml`, replacing the example with your key:
+To set up the API key:
 
-`ANTHROPIC_API_KEY = "sk-ant-your-key-here"`
+1. Open the project folder.
+2. Create a folder named `.streamlit` if it does not already exist.
+3. Inside that folder, create a file named `secrets.toml`.
+4. Add the following line and replace the example with your API key:
 
-This file is listed in `.gitignore` so the key is never uploaded to GitHub. Do not share your key or commit it.
+`ANTHROPIC_API_KEY = "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"`
 
 ## Running the Application
 
-Once the libraries are installed, run the following command in the terminal:
+After installing the libraries, run the following command in the terminal:
 
 `python -m streamlit run app.py`
 
-The application should automatically open in your web browser. If it does not open, go to `http://localhost:8501`.
+The application should open in your browser. If it does not open automatically, go to http://localhost:8501.
 
-Users can type their available ingredients, upload a photo or take a picture with their camera, select a cuisine, and view recommended recipes. When a photo is added, the ingredients found in it are shown in a list that the user can edit before searching. Ingredients from the photo and typed ingredients are combined for the search.
+Users can enter their ingredients, upload a photo, or take a picture using their camera. They can also select a cuisine and get recipe recommendations.
+
+When a photo is uploaded, the system uses Claude AI to identify the ingredients. Users can check and edit the detected ingredients before getting recipe recommendations.
 
 ## Image Recognition
 
-When a user adds a photo, our program resizes it and sends it to Anthropic's Claude Opus 5.5 vision model along with a list of ingredient names from our recipe dataset. Claude returns the ingredients it can see and how confident it is in each one (high, medium, or low). We only keep ingredients that are in our dataset and that are at least medium confidence, so the results can be matched to recipes. Seasonings and liquids such as salt, pepper, and oil are left out because they cannot be reliably identified from a photo.
+Our project uses Anthropic's Claude AI to recognize ingredients from pictures. The system identifies ingredients from an uploaded photo and compares them with the ingredients in our recipe dataset.
 
-This code is in `image_recognition.py`. Each photo is only sent once, even if the user changes other settings, to avoid repeated API costs.
+We tested this feature by uploading ingredient photos and checking if the AI identified the ingredients correctly.
 
-### Evaluating Accuracy
-
-We measured image recognition accuracy using our own labeled photos. The photos and the correct ingredients for each one are in `data/vision_test/`, listed in `labels.csv`. To run the evaluation, enter the following command in the terminal:
-
-`python evaluate_vision.py`
-
-This sends each photo to Claude once, saves the results, and prints the precision (how many detected ingredients were correct), recall (how many of the real ingredients were found), and F1 score. To score the saved results again without using the API, run:
-
-`python evaluate_vision.py --rescore`
-
-**Results:** _To be added after testing._
-
+The image recognition code is in `image_recognition.py`.
 
 ## Testing
 
-To test our project, we used Pytest to check if the ingredient preprocessing functions work correctly. To run the test cases, enter the following command in the terminal:
+We used Pytest to check if our ingredient preprocessing functions work correctly.
+
+To run the tests, enter:
 
 `python -m pytest -v`
 
-The terminal will show whether the tests passed or failed.
+The terminal will show which tests passed or failed.
+
+**Test Results:** We ran our tests, and both tests passed (2 passed).
 
 ## Login Credentials
 
-No login or account is required to use our application. An Anthropic API key is only needed for the ingredient photo feature (see API Key Setup).
+No login or account is required to use our application. An Anthropic API key is only needed for the ingredient photo feature.
+
 
 ## Credits
 

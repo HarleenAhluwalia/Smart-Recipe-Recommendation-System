@@ -25,7 +25,7 @@ To set up the API key:
 3. Inside that folder, create a file named `secrets.toml`.
 4. Add the following line and replace the example with your API key:
 
-`ANTHROPIC_API_KEY = "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"`
+`ANTHROPIC_API_KEY = "your-api-key-here"
 
 ## Running the Application
 

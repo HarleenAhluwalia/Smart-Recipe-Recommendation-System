@@ -18,14 +18,7 @@ To install the required libraries, enter this command:
 
 Our photo recognition feature uses the Anthropic API. Users can still type ingredients and get recipe recommendations without an API key.
 
-To set up the API key:
-
-1. Open the project folder.
-2. Create a folder named `.streamlit` if it does not already exist.
-3. Inside that folder, create a file named `secrets.toml`.
-4. Add the following line and replace the example with your API key:
-
-`ANTHROPIC_API_KEY = "your-api-key-here"
+The Anthropic API key is already included in the .streamlit/secrets.toml file for testing. No additional API key setup is needed. The key is temporary and will only be used for this project.
 
 ## Running the Application
 
